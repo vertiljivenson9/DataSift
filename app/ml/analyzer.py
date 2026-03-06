@@ -14,7 +14,7 @@ import uuid
 
 from ..database import engine
 from ..models import Base
-from . import auth, payments
+from app import auth, payments
 from .ml.analyzer import router as ml_router
 
 
