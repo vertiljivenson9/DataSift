@@ -1028,10 +1028,8 @@ curl -X POST <span class="string">"https://api.datasift.io/v1/analyze"</span> \\
                 return;
             }
             try {
-                const response = await fetch('/auth/register', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: new URLSearchParams({ email, password })
+                const response = await fetch(`/auth/register?email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`, {
+                    method: 'POST'
                 });
                 const data = await response.json();
                 if (response.ok) {
@@ -1058,10 +1056,8 @@ curl -X POST <span class="string">"https://api.datasift.io/v1/analyze"</span> \\
                 return;
             }
             try {
-                const response = await fetch('/auth/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: new URLSearchParams({ email, password })
+                const response = await fetch(`/auth/login?email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`, {
+                    method: 'POST'
                 });
                 const data = await response.json();
                 if (response.ok) {
