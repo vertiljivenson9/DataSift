@@ -1,104 +1,155 @@
-from fastapi import FastAPI, Request, Depends, HTTPException
-from fastapi.responses import HTMLResponse, JSONResponse
-from fastapi.templating import Jinja2Templates
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.middleware.trustedhost import TrustedHostMiddleware
-from contextlib import asynccontextmanager
-import os
+"""
+ML Analysis API - Enterprise-grade data analysis with machine learning
+"""
+
+from fastapi import APIRouter, UploadFile, File, Depends, HTTPException, status, BackgroundTasks
+from pydantic import BaseModel
+from typing import List, Optional, Dict, Any
+from sqlalchemy.orm import Session
+from datetime import datetime
+import pandas as pd
+import io
 import time
-import uuid
+import hashlib
 
-from app.database import engine
-from app.models import Base
-from app import auth, payments
-from app.ml.analyzer import router as ml_router  # CORRECTO: ruta absoluta desde app
+# Corrección de imports según tu estructura original
+from app.auth import get_current_user
+from app.database import get_db
+from app.models import User, AnalysisReport
+from app.ml.enhanced_analyzer import EnhancedDataAnalyzer
 
-APP_NAME = "DataSift API"
-APP_VERSION = "2.1.0"
-APP_DESCRIPTION = "Enterprise-grade data intelligence platform with automated ML analysis"
+router = APIRouter()
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    if os.getenv("AUTO_CREATE_TABLES", "true") == "true":
-        Base.metadata.create_all(bind=engine)
-    yield
+# -----------------------------
+# Pydantic models
+# -----------------------------
+class AnalysisSummary(BaseModel):
+    overall: Dict[str, Any]
+    numeric_stats: Optional[Dict[str, Any]] = None
+    categorical_stats: Optional[Dict[str, Any]] = None
 
-app = FastAPI(
-    title=APP_NAME,
-    version=APP_VERSION,
-    description=APP_DESCRIPTION,
-    docs_url="/docs",
-    redoc_url="/redoc",
-    openapi_url="/openapi.json",
-    lifespan=lifespan
-)
+class Pattern(BaseModel):
+    type: str
+    description: str
+    confidence: float
+    details: Optional[Dict[str, Any]] = None
 
-# Security middleware
-app.add_middleware(TrustedHostMiddleware, allowed_hosts=["*"])
+class Recommendation(BaseModel):
+    priority: str
+    category: str
+    message: str
+    action: str
 
-# CORS middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-    expose_headers=["X-Request-ID"]
-)
+class AnalysisResponse(BaseModel):
+    id: str
+    dataset_name: str
+    dataset_hash: str
+    summary: AnalysisSummary
+    patterns: List[Pattern]
+    recommendations: List[Recommendation]
+    processing_time_ms: int
+    requests_remaining: int
+    timestamp: str
 
-templates = Jinja2Templates(directory="app/templates")
+class ReportSummary(BaseModel):
+    id: str
+    dataset_name: str
+    created_at: str
+    processing_time_ms: int
 
-# Routers
-app.include_router(auth.router, prefix="/auth", tags=["Authentication"])
-app.include_router(payments.router, prefix="/payments", tags=["Payments"])
-app.include_router(ml_router, prefix="/api/v1", tags=["Analysis"])
+class UsageStats(BaseModel):
+    total_requests: int
+    requests_this_month: int
+    request_limit: int
+    usage_percentage: float
+    datasets_analyzed: int
 
-# Security headers middleware
-@app.middleware("http")
-async def security_headers(request: Request, call_next):
-    request_id = str(uuid.uuid4())
-    response = await call_next(request)
-    response.headers["X-Request-ID"] = request_id
-    response.headers["X-Content-Type-Options"] = "nosniff"
-    response.headers["X-Frame-Options"] = "DENY"
-    response.headers["X-XSS-Protection"] = "1; mode=block"
-    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
-    response.headers["Referrer-Policy"] = "no-referrer"
-    return response
+# -----------------------------
+# Helpers
+# -----------------------------
+def generate_dataset_hash(content: bytes) -> str:
+    """Generate MD5 hash of dataset content"""
+    return hashlib.sha256(content).hexdigest()[:32]
 
-@app.get("/", response_class=HTMLResponse, include_in_schema=False)
-async def root(request: Request):
-    return templates.TemplateResponse(
-        "index.html",
-        {"request": request, "paypal_client_id": os.getenv("PAYPAL_CLIENT_ID", "")}
+def check_file_size_limit(file_size: int, user: User) -> bool:
+    plan_limits = {
+        "free": 10 * 1024 * 1024,
+        "pro": 100 * 1024 * 1024,
+        "enterprise": 500 * 1024 * 1024
+    }
+    return file_size <= plan_limits.get(user.plan_id, 10 * 1024 * 1024)
+
+# -----------------------------
+# Endpoints
+# -----------------------------
+@router.post("/analyze", response_model=AnalysisResponse)
+async def analyze(
+    background_tasks: BackgroundTasks,
+    file: UploadFile = File(...),
+    analysis_type: str = "full",
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    start_time = time.time()
+
+    # Request limit check
+    if user.monthly_requests >= user.request_limit:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Monthly request limit exceeded"
+        )
+
+    contents = await file.read()
+    if not check_file_size_limit(len(contents), user):
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail="File too large for your plan"
+        )
+
+    dataset_hash = generate_dataset_hash(contents)
+
+    # Parse CSV
+    try:
+        df = pd.read_csv(io.StringIO(contents.decode('utf-8')))
+    except Exception:
+        df = pd.read_csv(io.BytesIO(contents))
+
+    if df.empty or len(df.columns) == 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="CSV file is empty or has no columns"
+        )
+
+    analyzer = EnhancedDataAnalyzer(df)
+    report = analyzer.generate_complete_report(analysis_type)
+    processing_time = int((time.time() - start_time) * 1000)
+
+    user.monthly_requests += 1
+
+    db_report = AnalysisReport(
+        user_id=user.id,
+        dataset_name=file.filename,
+        dataset_hash=dataset_hash,
+        summary=report.get("summary", {}),
+        patterns=report.get("patterns", []),
+        recommendations=report.get("recommendations", []),
+        processing_time_ms=processing_time
     )
+    db.add(db_report)
+    db.commit()
+    db.refresh(db_report)
 
-@app.get("/health", tags=["System"])
-async def health_check():
-    return {"status": "healthy", "service": APP_NAME, "version": APP_VERSION, "timestamp": int(time.time())}
-
-@app.get("/api/v1/status", tags=["System"])
-async def api_status():
     return {
-        "service": APP_NAME,
-        "version": APP_VERSION,
-        "status": "operational",
-        "features": {"authentication": True, "payments": True, "ml_analysis": True, "webhooks": True}
+        "id": str(db_report.id),
+        "dataset_name": file.filename,
+        "dataset_hash": dataset_hash,
+        "summary": report.get("summary", {}),
+        "patterns": report.get("patterns", []),
+        "recommendations": report.get("recommendations", []),
+        "processing_time_ms": processing_time,
+        "requests_remaining": user.request_limit - user.monthly_requests,
+        "timestamp": datetime.utcnow().isoformat()
     }
 
-@app.get("/dashboard", tags=["User"])
-async def dashboard(user=Depends(auth.get_current_user)):
-    usage_percentage = round((user.monthly_requests / user.request_limit) * 100, 2) if user.request_limit > 0 else 0
-    return {
-        "user": {"id": str(user.id), "email": user.email, "plan": user.plan_id, "status": user.subscription_status},
-        "usage": {"requests_used": user.monthly_requests, "request_limit": user.request_limit, "usage_percentage": usage_percentage},
-        "api": {"key": user.api_key, "endpoint": "/api/v1/analyze"}
-    }
-
-@app.exception_handler(HTTPException)
-async def http_exception_handler(request: Request, exc: HTTPException):
-    return JSONResponse(status_code=exc.status_code, content={"error": True, "code": exc.status_code, "message": exc.detail, "timestamp": int(time.time())})
-
-@app.exception_handler(Exception)
-async def general_exception_handler(request: Request, exc: Exception):
-    return JSONResponse(status_code=500, content={"error": True, "code": 500, "message": "Internal server error", "timestamp": int(time.time())})
+# Otros endpoints como /reports, /reports/{report_id}, /usage, /reports/{report_id} DELETE
+# puedes mantener exactamente igual como los tenías
