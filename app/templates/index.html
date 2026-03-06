@@ -970,6 +970,13 @@ curl -X POST <span class="string">"https://api.datasift.io/v1/analyze"</span> \\
         }
 
         function showToast(message, type = 'success') {
+            if (typeof message !== 'string') {
+                try {
+                    message = JSON.stringify(message);
+                } catch(e) {
+                    message = 'Error desconocido';
+                }
+            }
             const toast = document.getElementById('toast');
             document.getElementById('toast-message').textContent = message;
             toast.className = 'toast ' + type + ' show';
@@ -996,11 +1003,11 @@ curl -X POST <span class="string">"https://api.datasift.io/v1/analyze"</span> \\
                 const data = await response.json();
                 if (response.ok) {
                     currentUser = data;
-                    document.getElementById('plan-value').textContent = data.plan_id.toUpperCase();
-                    document.getElementById('requests-value').textContent = data.monthly_requests.toLocaleString();
-                    document.getElementById('requests-sublabel').textContent = `of ${data.request_limit.toLocaleString()} monthly`;
+                    document.getElementById('plan-value').textContent = data.plan_id ? data.plan_id.toUpperCase() : '—';
+                    document.getElementById('requests-value').textContent = data.monthly_requests?.toLocaleString() || '0';
+                    document.getElementById('requests-sublabel').textContent = `of ${(data.request_limit || 0).toLocaleString()} monthly`;
                     
-                    const usage = Math.round((data.monthly_requests / data.request_limit) * 100);
+                    const usage = data.request_limit ? Math.round((data.monthly_requests / data.request_limit) * 100) : 0;
                     document.getElementById('usage-value').textContent = usage + '%';
                     document.getElementById('usage-value').style.color = usage > 80 ? 'var(--color-warning)' : 'var(--color-text-primary)';
                     
@@ -1033,7 +1040,10 @@ curl -X POST <span class="string">"https://api.datasift.io/v1/analyze"</span> \\
                     showToast('Account created successfully');
                     showDashboard();
                 } else {
-                    showToast(data.detail || 'Registration failed', 'error');
+                    let errorMsg = 'Registration failed';
+                    if (data.detail) errorMsg = data.detail;
+                    else if (data.message) errorMsg = data.message;
+                    showToast(errorMsg, 'error');
                 }
             } catch (error) {
                 showToast('Connection error', 'error');
@@ -1060,7 +1070,10 @@ curl -X POST <span class="string">"https://api.datasift.io/v1/analyze"</span> \\
                     showToast('Welcome back');
                     showDashboard();
                 } else {
-                    showToast('Invalid credentials', 'error');
+                    let errorMsg = 'Login failed';
+                    if (data.detail) errorMsg = data.detail;
+                    else if (data.message) errorMsg = data.message;
+                    showToast(errorMsg, 'error');
                 }
             } catch (error) {
                 showToast('Connection error', 'error');
