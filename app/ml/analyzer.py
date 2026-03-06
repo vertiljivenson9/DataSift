@@ -2,7 +2,7 @@
 DataSift API - Enterprise Data Intelligence Platform
 """
 
-from fastapi import FastAPI, Request, Depends, HTTPException, status
+from fastapi import FastAPI, Request, Depends, HTTPException
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
@@ -10,7 +10,6 @@ from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from contextlib import asynccontextmanager
 import os
 import time
-import secrets
 import uuid
 
 from .database import engine
@@ -27,6 +26,7 @@ APP_DESCRIPTION = "Enterprise-grade data intelligence platform with automated ML
 @asynccontextmanager
 async def lifespan(app: FastAPI):
 
+    # Auto create tables
     if os.getenv("AUTO_CREATE_TABLES", "true") == "true":
         Base.metadata.create_all(bind=engine)
 
@@ -131,6 +131,7 @@ async def api_status():
 async def dashboard(user=Depends(auth.get_current_user)):
 
     usage_percentage = 0
+
     if user.request_limit > 0:
         usage_percentage = round(
             (user.monthly_requests / user.request_limit) * 100, 2
