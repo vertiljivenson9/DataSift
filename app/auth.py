@@ -18,14 +18,12 @@ from . import models, database
 router = APIRouter()
 security = HTTPBearer(auto_error=False)
 
-# Password hashing configuration
 pwd_context = CryptContext(
     schemes=["bcrypt"],
     deprecated="auto",
     bcrypt__rounds=12
 )
 
-# JWT Configuration
 SECRET_KEY = os.getenv("SECRET_KEY")
 if not SECRET_KEY:
     SECRET_KEY = secrets.token_urlsafe(32)
@@ -36,7 +34,6 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 30
 REFRESH_TOKEN_EXPIRE_DAYS = 7
 
 
-# Pydantic models for request/response validation
 class UserRegister(BaseModel):
     email: EmailStr
     password: str
@@ -67,17 +64,14 @@ class UserProfile(BaseModel):
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verify a password against its hash"""
     return pwd_context.verify(plain_password, hashed_password)
 
 
 def get_password_hash(password: str) -> str:
-    """Generate password hash"""
     return pwd_context.hash(password)
 
 
 def validate_password(password: str) -> tuple[bool, str]:
-    """Validate password strength"""
     if len(password) < 8:
         return False, "Password must be at least 8 characters long"
     if not re.search(r"[A-Z]", password):
@@ -90,7 +84,6 @@ def validate_password(password: str) -> tuple[bool, str]:
 
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
-    """Create JWT access token"""
     to_encode = data.copy()
     expire = datetime.utcnow() + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
     to_encode.update({
@@ -102,12 +95,10 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
 
 
 def generate_api_key() -> str:
-    """Generate a secure API key"""
     return f"ds_{secrets.token_urlsafe(48)}"
 
 
 def decode_token(token: str) -> dict:
-    """Decode and validate JWT token"""
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         return payload
@@ -129,14 +120,9 @@ async def get_current_user(
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
     x_api_key: Optional[str] = Header(None, alias="X-API-Key"),
     db: Session = Depends(database.get_db)
-) -> models.User:
-    """
-    Get current user from JWT token or API key
-    Supports both Bearer token and X-API-Key header
-    """
+):
     user = None
-    
-    # Try API key first
+
     if x_api_key:
         user = db.query(models.User).filter(models.User.api_key == x_api_key).first()
         if not user:
@@ -145,18 +131,20 @@ async def get_current_user(
                 detail="Invalid API key",
                 headers={"WWW-Authenticate": "Bearer"}
             )
-    
-    # Fall back to JWT token
+
     elif credentials:
         payload = decode_token(credentials.credentials)
         user_id = payload.get("sub")
+
         if not user_id:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid token payload",
                 headers={"WWW-Authenticate": "Bearer"}
             )
+
         user = db.query(models.User).filter(models.User.id == user_id).first()
+
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -169,14 +157,13 @@ async def get_current_user(
             detail="Authentication required",
             headers={"WWW-Authenticate": "Bearer"}
         )
-    
-    # Check subscription status
+
     if user.subscription_status == "suspended":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Account suspended. Please contact support."
         )
-    
+
     return user
 
 
@@ -188,31 +175,30 @@ async def get_current_user(
     description="Create a new account with email and password"
 )
 def register(
-    email: str,
-    password: str,
+    user_data: UserRegister,
     db: Session = Depends(database.get_db)
 ):
-    """Register a new user account"""
-    # Validate password
+
+    email = user_data.email
+    password = user_data.password
+
     is_valid, error_msg = validate_password(password)
     if not is_valid:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=error_msg
         )
-    
-    # Check if email already exists
+
     existing_user = db.query(models.User).filter(models.User.email == email).first()
     if existing_user:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Email already registered"
         )
-    
-    # Create new user
+
     hashed_password = get_password_hash(password)
     api_key = generate_api_key()
-    
+
     user = models.User(
         email=email,
         hashed_password=hashed_password,
@@ -222,14 +208,13 @@ def register(
         monthly_requests=0,
         request_limit=1000
     )
-    
+
     db.add(user)
     db.commit()
     db.refresh(user)
-    
-    # Generate access token
+
     access_token = create_access_token({"sub": str(user.id)})
-    
+
     return {
         "access_token": access_token,
         "token_type": "bearer",
@@ -245,24 +230,24 @@ def register(
     description="Authenticate with email and password"
 )
 def login(
-    email: str,
-    password: str,
+    user_data: UserLogin,
     db: Session = Depends(database.get_db)
 ):
-    """Authenticate user and return access token"""
-    # Find user by email
+
+    email = user_data.email
+    password = user_data.password
+
     user = db.query(models.User).filter(models.User.email == email).first()
-    
+
     if not user or not verify_password(password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password",
             headers={"WWW-Authenticate": "Bearer"}
         )
-    
-    # Generate access token
+
     access_token = create_access_token({"sub": str(user.id)})
-    
+
     return {
         "access_token": access_token,
         "token_type": "bearer",
@@ -278,7 +263,7 @@ def login(
     description="Retrieve profile information for the authenticated user"
 )
 async def get_me(user: models.User = Depends(get_current_user)):
-    """Get current user profile"""
+
     return {
         "id": str(user.id),
         "email": user.email,
@@ -299,9 +284,9 @@ async def get_me(user: models.User = Depends(get_current_user)):
     description="Get a new access token using the current valid token"
 )
 async def refresh_token(user: models.User = Depends(get_current_user)):
-    """Refresh access token"""
+
     access_token = create_access_token({"sub": str(user.id)})
-    
+
     return {
         "access_token": access_token,
         "token_type": "bearer",
@@ -320,11 +305,12 @@ async def regenerate_api_key(
     user: models.User = Depends(get_current_user),
     db: Session = Depends(database.get_db)
 ):
-    """Regenerate API key"""
+
     new_api_key = generate_api_key()
+
     user.api_key = new_api_key
     db.commit()
-    
+
     return {
         "message": "API key regenerated successfully",
         "api_key": new_api_key
