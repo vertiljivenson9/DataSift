@@ -1,12 +1,11 @@
 """
 SQLAlchemy Models - Database schema for DataSift SaaS platform
 """
-from sqlalchemy import Column, String, Integer, Float, DateTime, Boolean, JSON, Text, Index
+from sqlalchemy import Column, String, Integer, Float, DateTime, Boolean, JSON, Text, Index, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.sql import func
 import uuid
-from datetime import datetime
 
 Base = declarative_base()
 
@@ -170,7 +169,3 @@ class UsageLog(Base):
         Index('ix_usage_user_created', 'user_id', 'created_at'),
         Index('ix_usage_endpoint_created', 'endpoint', 'created_at'),
     )
-
-
-# Fix the ForeignKey import
-from sqlalchemy import ForeignKey
