@@ -1,0 +1,1146 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DataSift — Enterprise Data Intelligence Platform</title>
+    <script src="https://www.paypal.com/sdk/js?client-id={{ paypal_client_id }}&currency=USD"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --color-bg: #0a0a0f;
+            --color-surface: #111118;
+            --color-surface-elevated: #1a1a24;
+            --color-border: #272735;
+            --color-text-primary: #fafafa;
+            --color-text-secondary: #a1a1aa;
+            --color-text-muted: #71717a;
+            --color-accent: #6366f1;
+            --color-accent-hover: #818cf8;
+            --color-success: #22c55e;
+            --color-warning: #f59e0b;
+            --color-error: #ef4444;
+            --color-enterprise: #f59e0b;
+            --color-pro: #6366f1;
+            --radius-sm: 6px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.5);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        html { scroll-behavior: smooth; }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--color-bg);
+            color: var(--color-text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        /* Navigation */
+        .nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 64px;
+            background: rgba(10, 10, 15, 0.8);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--color-border);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 48px;
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 700;
+            font-size: 20px;
+            letter-spacing: -0.5px;
+        }
+
+        .nav-brand svg {
+            width: 28px;
+            height: 28px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 32px;
+        }
+
+        .nav-links a {
+            color: var(--color-text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover {
+            color: var(--color-text-primary);
+        }
+
+        .nav-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        /* Hero Section */
+        .hero {
+            padding: 160px 48px 100px;
+            text-align: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 14px;
+            background: var(--color-surface-elevated);
+            border: 1px solid var(--color-border);
+            border-radius: 100px;
+            font-size: 13px;
+            color: var(--color-text-secondary);
+            margin-bottom: 32px;
+        }
+
+        .hero-badge span {
+            width: 8px;
+            height: 8px;
+            background: var(--color-success);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .hero h1 {
+            font-size: 64px;
+            font-weight: 700;
+            letter-spacing: -2px;
+            line-height: 1.1;
+            margin-bottom: 24px;
+            background: linear-gradient(135deg, #fff 0%, #a1a1aa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero p {
+            font-size: 20px;
+            color: var(--color-text-secondary);
+            max-width: 600px;
+            margin: 0 auto 48px;
+            font-weight: 400;
+        }
+
+        .hero-stats {
+            display: flex;
+            justify-content: center;
+            gap: 64px;
+            margin-top: 64px;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 36px;
+            font-weight: 700;
+            color: var(--color-text-primary);
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: var(--color-text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 24px;
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: var(--radius-md);
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: var(--color-accent);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--color-accent-hover);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: var(--color-surface-elevated);
+            color: var(--color-text-primary);
+            border: 1px solid var(--color-border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--color-border);
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: var(--color-text-secondary);
+        }
+
+        .btn-ghost:hover {
+            color: var(--color-text-primary);
+        }
+
+        /* Section */
+        .section {
+            padding: 100px 48px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 64px;
+        }
+
+        .section-header h2 {
+            font-size: 40px;
+            font-weight: 700;
+            letter-spacing: -1px;
+            margin-bottom: 16px;
+        }
+
+        .section-header p {
+            font-size: 18px;
+            color: var(--color-text-secondary);
+        }
+
+        /* Features Grid */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+        }
+
+        .feature-card {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            padding: 32px;
+            transition: all 0.3s;
+        }
+
+        .feature-card:hover {
+            border-color: var(--color-accent);
+            transform: translateY(-4px);
+        }
+
+        .feature-icon {
+            width: 48px;
+            height: 48px;
+            background: var(--color-surface-elevated);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        .feature-card h3 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .feature-card p {
+            font-size: 14px;
+            color: var(--color-text-secondary);
+            line-height: 1.7;
+        }
+
+        /* Auth Section */
+        .auth-section {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            padding: 48px;
+            max-width: 480px;
+            margin: 0 auto;
+        }
+
+        .auth-section h2 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+
+        .auth-section .subtitle {
+            text-align: center;
+            color: var(--color-text-secondary);
+            font-size: 14px;
+            margin-bottom: 32px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--color-text-secondary);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--color-surface-elevated);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            color: var(--color-text-primary);
+            font-size: 15px;
+            transition: all 0.2s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--color-accent);
+        }
+
+        .form-input::placeholder {
+            color: var(--color-text-muted);
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .form-actions .btn {
+            flex: 1;
+        }
+
+        /* Dashboard */
+        .dashboard {
+            display: none;
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+        }
+
+        .dashboard-header {
+            padding: 24px 32px;
+            border-bottom: 1px solid var(--color-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .dashboard-header h2 {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1px;
+            background: var(--color-border);
+        }
+
+        .metric-card {
+            background: var(--color-surface);
+            padding: 24px;
+        }
+
+        .metric-label {
+            font-size: 12px;
+            color: var(--color-text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .metric-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--color-text-primary);
+        }
+
+        .metric-sublabel {
+            font-size: 13px;
+            color: var(--color-text-secondary);
+            margin-top: 4px;
+        }
+
+        .api-key-section {
+            padding: 32px;
+            border-top: 1px solid var(--color-border);
+        }
+
+        .api-key-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .api-key-header h3 {
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--color-text-secondary);
+        }
+
+        .api-key-box {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: var(--color-surface-elevated);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            padding: 16px;
+        }
+
+        .api-key-value {
+            font-family: 'SF Mono', Monaco, monospace;
+            font-size: 13px;
+            color: var(--color-text-primary);
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .api-key-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .icon-btn {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-sm);
+            color: var(--color-text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .icon-btn:hover {
+            background: var(--color-border);
+            color: var(--color-text-primary);
+        }
+
+        /* Pricing */
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+        }
+
+        .pricing-card {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            padding: 40px 32px;
+            position: relative;
+            transition: all 0.3s;
+        }
+
+        .pricing-card:hover {
+            border-color: var(--color-border);
+            transform: translateY(-4px);
+        }
+
+        .pricing-card.featured {
+            border-color: var(--color-accent);
+            background: linear-gradient(180deg, var(--color-surface) 0%, rgba(99, 102, 241, 0.05) 100%);
+        }
+
+        .pricing-card.featured::before {
+            content: 'MOST POPULAR';
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--color-accent);
+            color: white;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 4px 12px;
+            border-radius: 100px;
+            letter-spacing: 0.5px;
+        }
+
+        .pricing-name {
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--color-text-muted);
+            margin-bottom: 16px;
+        }
+
+        .pricing-price {
+            font-size: 48px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .pricing-price span {
+            font-size: 16px;
+            font-weight: 400;
+            color: var(--color-text-muted);
+        }
+
+        .pricing-description {
+            font-size: 14px;
+            color: var(--color-text-secondary);
+            margin-bottom: 32px;
+        }
+
+        .pricing-features {
+            list-style: none;
+            margin-bottom: 32px;
+        }
+
+        .pricing-features li {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 0;
+            font-size: 14px;
+            color: var(--color-text-secondary);
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .pricing-features li:last-child {
+            border-bottom: none;
+        }
+
+        .pricing-features li::before {
+            content: '✓';
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--color-success);
+            color: white;
+            border-radius: 50%;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .paypal-container {
+            margin-top: 24px;
+        }
+
+        /* Code Block */
+        .code-section {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+        }
+
+        .code-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 16px;
+            background: var(--color-surface-elevated);
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .code-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .code-dot.red { background: #ef4444; }
+        .code-dot.yellow { background: #f59e0b; }
+        .code-dot.green { background: #22c55e; }
+
+        .code-title {
+            font-size: 12px;
+            color: var(--color-text-muted);
+            margin-left: 8px;
+        }
+
+        .code-block {
+            padding: 24px;
+            overflow-x: auto;
+        }
+
+        .code-block pre {
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+            font-size: 13px;
+            line-height: 1.8;
+            color: var(--color-text-secondary);
+            margin: 0;
+        }
+
+        .code-block .comment { color: var(--color-text-muted); }
+        .code-block .keyword { color: #c084fc; }
+        .code-block .string { color: #86efac; }
+        .code-block .function { color: #60a5fa; }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            padding: 16px 24px;
+            background: var(--color-surface-elevated);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s;
+            z-index: 2000;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .toast.success { border-left: 3px solid var(--color-success); }
+        .toast.error { border-left: 3px solid var(--color-error); }
+
+        /* Footer */
+        .footer {
+            padding: 48px;
+            border-top: 1px solid var(--color-border);
+            text-align: center;
+        }
+
+        .footer p {
+            font-size: 14px;
+            color: var(--color-text-muted);
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .features-grid,
+            .pricing-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .nav { padding: 0 24px; }
+            .nav-links { display: none; }
+            .hero { padding: 120px 24px 60px; }
+            .hero h1 { font-size: 40px; }
+            .section { padding: 60px 24px; }
+            .features-grid,
+            .pricing-grid {
+                grid-template-columns: 1fr;
+            }
+            .hero-stats {
+                flex-direction: column;
+                gap: 24px;
+            }
+            .dashboard-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="nav">
+        <div class="nav-brand">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="#6366f1"/>
+                <path d="M2 17L12 22L22 17" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M2 12L12 17L22 12" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            DataSift
+        </div>
+        <div class="nav-links">
+            <a href="#features">Features</a>
+            <a href="#pricing">Pricing</a>
+            <a href="#docs">Documentation</a>
+        </div>
+        <div class="nav-actions">
+            <button class="btn btn-ghost" onclick="scrollToAuth()">Sign In</button>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <section class="hero">
+        <div class="hero-badge">
+            <span></span>
+            Enterprise-Grade Data Intelligence
+        </div>
+        <h1>Transform Raw Data<br>Into Strategic Insights</h1>
+        <p>Advanced machine learning platform for automated data analysis, pattern detection, and intelligent recommendations at enterprise scale.</p>
+        <div>
+            <button class="btn btn-primary" onclick="scrollToAuth()">Start Free Trial</button>
+            <button class="btn btn-secondary" onclick="scrollToDocs()">View Documentation</button>
+        </div>
+        <div class="hero-stats">
+            <div class="stat">
+                <div class="stat-value">10M+</div>
+                <div class="stat-label">Rows Analyzed</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value">99.9%</div>
+                <div class="stat-label">Uptime SLA</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value">&lt;100ms</div>
+                <div class="stat-label">Response Time</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features -->
+    <section class="section" id="features">
+        <div class="section-header">
+            <h2>Enterprise-Ready Features</h2>
+            <p>Everything you need to analyze data at scale</p>
+        </div>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">🤖</div>
+                <h3>Automated ML</h3>
+                <p>Isolation Forest and K-Means clustering with automatic hyperparameter tuning for outlier detection and pattern recognition.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">⚡</div>
+                <h3>Real-Time Processing</h3>
+                <p>Sub-second analysis of datasets up to 500MB with horizontally scalable infrastructure powered by Supabase.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔐</div>
+                <h3>Enterprise Security</h3>
+                <p>JWT authentication, API key management, and row-level security with SOC 2 compliant infrastructure.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📊</div>
+                <h3>Advanced Analytics</h3>
+                <p>Comprehensive statistical summaries, correlation analysis, and automated data quality scoring.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔄</div>
+                <h3>RESTful API</h3>
+                <p>Clean, well-documented API with automatic OpenAPI documentation and SDK support.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">💳</div>
+                <h3>Flexible Billing</h3>
+                <p>Usage-based pricing with PayPal integration, automatic invoicing, and enterprise contracts.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Auth & Dashboard -->
+    <section class="section" id="auth">
+        <div class="section-header">
+            <h2>Access Your Workspace</h2>
+            <p>Sign in to manage your API keys and monitor usage</p>
+        </div>
+
+        <!-- Auth Form -->
+        <div class="auth-section" id="auth-form">
+            <h2>Welcome Back</h2>
+            <p class="subtitle">Enter your credentials to access your dashboard</p>
+            <div class="form-group">
+                <label>Email Address</label>
+                <input type="email" class="form-input" id="email" placeholder="you@company.com">
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" class="form-input" id="password" placeholder="••••••••">
+            </div>
+            <div class="form-actions">
+                <button class="btn btn-primary" onclick="login()">Sign In</button>
+                <button class="btn btn-secondary" onclick="register()">Create Account</button>
+            </div>
+        </div>
+
+        <!-- Dashboard -->
+        <div class="dashboard" id="dashboard">
+            <div class="dashboard-header">
+                <h2>API Dashboard</h2>
+                <button class="btn btn-secondary" onclick="logout()">Sign Out</button>
+            </div>
+            <div class="dashboard-grid">
+                <div class="metric-card">
+                    <div class="metric-label">Current Plan</div>
+                    <div class="metric-value" id="plan-value">—</div>
+                    <div class="metric-sublabel">Subscription Active</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Requests Used</div>
+                    <div class="metric-value" id="requests-value">—</div>
+                    <div class="metric-sublabel" id="requests-sublabel">This billing period</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Usage</div>
+                    <div class="metric-value" id="usage-value">—</div>
+                    <div class="metric-sublabel">Of monthly quota</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Status</div>
+                    <div class="metric-value" style="color: var(--color-success);">●</div>
+                    <div class="metric-sublabel">All systems operational</div>
+                </div>
+            </div>
+            <div class="api-key-section">
+                <div class="api-key-header">
+                    <h3>API Key</h3>
+                    <button class="btn btn-secondary" onclick="regenerateKey()">Regenerate</button>
+                </div>
+                <div class="api-key-box">
+                    <span class="api-key-value" id="api-key">—</span>
+                    <div class="api-key-actions">
+                        <button class="icon-btn" onclick="copyKey()" title="Copy">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                            </svg>
+                        </button>
+                        <button class="icon-btn" onclick="toggleKey()" title="Show/Hide">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing -->
+    <section class="section" id="pricing">
+        <div class="section-header">
+            <h2>Simple, Transparent Pricing</h2>
+            <p>Choose the plan that fits your scale</p>
+        </div>
+        <div class="pricing-grid">
+            <div class="pricing-card">
+                <div class="pricing-name">Starter</div>
+                <div class="pricing-price">$0<span>/month</span></div>
+                <p class="pricing-description">Perfect for prototyping and small projects</p>
+                <ul class="pricing-features">
+                    <li>1,000 API requests/month</li>
+                    <li>Files up to 10 MB</li>
+                    <li>Basic statistical analysis</li>
+                    <li>Community support</li>
+                    <li>Standard API rate limits</li>
+                </ul>
+                <button class="btn btn-secondary" style="width: 100%;" onclick="scrollToAuth()">Get Started</button>
+            </div>
+            <div class="pricing-card featured">
+                <div class="pricing-name">Professional</div>
+                <div class="pricing-price">$29.99<span>/month</span></div>
+                <p class="pricing-description">For growing teams and production workloads</p>
+                <ul class="pricing-features">
+                    <li>10,000 API requests/month</li>
+                    <li>Files up to 100 MB</li>
+                    <li>Advanced ML (clustering, outliers)</li>
+                    <li>Priority email support</li>
+                    <li>Higher rate limits</li>
+                    <li>Custom report exports</li>
+                </ul>
+                <div class="paypal-container" id="paypal-button-pro"></div>
+            </div>
+            <div class="pricing-card">
+                <div class="pricing-name">Enterprise</div>
+                <div class="pricing-price">$199.99<span>/month</span></div>
+                <p class="pricing-description">For organizations with advanced requirements</p>
+                <ul class="pricing-features">
+                    <li>100,000 API requests/month</li>
+                    <li>Files up to 500 MB</li>
+                    <li>Dedicated infrastructure</li>
+                    <li>24/7 phone & email support</li>
+                    <li>Custom SLAs</li>
+                    <li>SSO & audit logs</li>
+                    <li>On-premise deployment</li>
+                </ul>
+                <div class="paypal-container" id="paypal-button-enterprise"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Documentation -->
+    <section class="section" id="docs">
+        <div class="section-header">
+            <h2>Quick Start</h2>
+            <p>Get up and running in minutes</p>
+        </div>
+        <div class="code-section">
+            <div class="code-header">
+                <span class="code-dot red"></span>
+                <span class="code-dot yellow"></span>
+                <span class="code-dot green"></span>
+                <span class="code-title">cURL Example</span>
+            </div>
+            <div class="code-block">
+                <pre><span class="comment"># Upload and analyze a CSV file</span>
+curl -X POST <span class="string">"https://api.datasift.io/v1/analyze"</span> \\
+  -H <span class="string">"Authorization: Bearer YOUR_API_KEY"</span> \\
+  -H <span class="string">"Content-Type: multipart/form-data"</span> \\
+  -F <span class="string">"file=@dataset.csv"</span> \\
+  -F <span class="string">"analysis_type=full"</span>
+
+<span class="comment"># Response includes summary, patterns, and recommendations</span></pre>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>© 2024 DataSift, Inc. All rights reserved. | <a href="#" style="color: var(--color-text-muted);">Privacy</a> | <a href="#" style="color: var(--color-text-muted);">Terms</a></p>
+    </footer>
+
+    <!-- Toast -->
+    <div class="toast" id="toast">
+        <span id="toast-message">Message</span>
+    </div>
+
+    <script>
+        let currentToken = localStorage.getItem('datasift_token');
+        let currentUser = null;
+        let keyVisible = false;
+
+        if (currentToken) {
+            showDashboard();
+        }
+
+        function scrollToAuth() {
+            document.getElementById('auth').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function scrollToDocs() {
+            document.getElementById('docs').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-message').textContent = message;
+            toast.className = 'toast ' + type + ' show';
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        function showDashboard() {
+            document.getElementById('auth-form').style.display = 'none';
+            document.getElementById('dashboard').style.display = 'block';
+            refreshUser();
+        }
+
+        function showAuthForm() {
+            document.getElementById('auth-form').style.display = 'block';
+            document.getElementById('dashboard').style.display = 'none';
+        }
+
+        async function refreshUser() {
+            if (!currentToken) return;
+            try {
+                const response = await fetch('/auth/me', {
+                    headers: { 'Authorization': `Bearer ${currentToken}` }
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    currentUser = data;
+                    document.getElementById('plan-value').textContent = data.plan_id.toUpperCase();
+                    document.getElementById('requests-value').textContent = data.monthly_requests.toLocaleString();
+                    document.getElementById('requests-sublabel').textContent = `of ${data.request_limit.toLocaleString()} monthly`;
+                    
+                    const usage = Math.round((data.monthly_requests / data.request_limit) * 100);
+                    document.getElementById('usage-value').textContent = usage + '%';
+                    document.getElementById('usage-value').style.color = usage > 80 ? 'var(--color-warning)' : 'var(--color-text-primary)';
+                    
+                    document.getElementById('api-key').textContent = keyVisible ? data.api_key : '•'.repeat(32);
+                } else {
+                    logout();
+                }
+            } catch (error) {
+                showToast('Connection error', 'error');
+            }
+        }
+
+        async function register() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            if (!email || !password) {
+                showToast('Please enter email and password', 'error');
+                return;
+            }
+            try {
+                const response = await fetch('/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams({ email, password })
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    currentToken = data.access_token;
+                    localStorage.setItem('datasift_token', currentToken);
+                    showToast('Account created successfully');
+                    showDashboard();
+                } else {
+                    showToast(data.detail || 'Registration failed', 'error');
+                }
+            } catch (error) {
+                showToast('Connection error', 'error');
+            }
+        }
+
+        async function login() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            if (!email || !password) {
+                showToast('Please enter email and password', 'error');
+                return;
+            }
+            try {
+                const response = await fetch('/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams({ email, password })
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    currentToken = data.access_token;
+                    localStorage.setItem('datasift_token', currentToken);
+                    showToast('Welcome back');
+                    showDashboard();
+                } else {
+                    showToast('Invalid credentials', 'error');
+                }
+            } catch (error) {
+                showToast('Connection error', 'error');
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('datasift_token');
+            currentToken = null;
+            currentUser = null;
+            showAuthForm();
+            showToast('Signed out');
+        }
+
+        function copyKey() {
+            if (!currentUser) return;
+            navigator.clipboard.writeText(currentUser.api_key);
+            showToast('API key copied to clipboard');
+        }
+
+        function toggleKey() {
+            keyVisible = !keyVisible;
+            if (currentUser) {
+                document.getElementById('api-key').textContent = keyVisible ? currentUser.api_key : '•'.repeat(32);
+            }
+        }
+
+        async function regenerateKey() {
+            showToast('Contact support to regenerate API key', 'error');
+        }
+
+        function setupPayPalButton(planId, elementId) {
+            if (!document.getElementById(elementId.replace('#', ''))) return;
+            
+            paypal.Buttons({
+                style: { 
+                    color: 'blue', 
+                    shape: 'rect', 
+                    label: 'pay',
+                    height: 45
+                },
+                createOrder: function(data, actions) {
+                    if (!currentToken) {
+                        showToast('Please sign in first', 'error');
+                        scrollToAuth();
+                        return;
+                    }
+                    return fetch('/payments/create-payment', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${currentToken}`
+                        },
+                        body: JSON.stringify({ plan_id: planId })
+                    }).then(res => res.json()).then(order => {
+                        return order.order_id;
+                    }).catch(err => {
+                        showToast('Error creating payment', 'error');
+                    });
+                },
+                onApprove: function(data, actions) {
+                    return fetch(`/payments/success?token=${data.orderID}&PayerID=${data.payerID}`)
+                        .then(res => res.json())
+                        .then(details => {
+                            if (details.success) {
+                                showToast(`Upgraded to ${details.user.plan_id.toUpperCase()}`);
+                                refreshUser();
+                            } else {
+                                showToast('Payment failed', 'error');
+                            }
+                        });
+                },
+                onError: function(err) {
+                    showToast('PayPal error', 'error');
+                }
+            }).render(elementId);
+        }
+
+        setupPayPalButton('pro', '#paypal-button-pro');
+        setupPayPalButton('enterprise', '#paypal-button-enterprise');
+    </script>
+</body>
+</html>
