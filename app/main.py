@@ -11,8 +11,9 @@ import os
 import time
 import secrets
 
-from .database import engine, Base, get_db
-from . import auth, payments, models
+from .database import engine, get_db
+from .models import Base
+from . import auth, payments
 from .ml.analyzer import router as ml_router
 
 # Application metadata
