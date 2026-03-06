@@ -86,8 +86,8 @@ class Payment(Base):
     # Billing cycle
     billing_cycle = Column(String(20), default="monthly")  # monthly, yearly
     
-    # Metadata
-    metadata = Column(JSONB, default=dict)
+    # Metadata (renombrado de 'metadata' a 'payment_metadata')
+    payment_metadata = Column(JSONB, default=dict)
     failure_reason = Column(Text)
     
     # Timestamps
