@@ -63,7 +63,7 @@ class Payment(Base):
     paypal_payer_id = Column(String(255))
     paypal_capture_id = Column(String(255))
     billing_cycle = Column(String(20), default="monthly")
-  payment_metadata = Column("metadata", JSONB, default=dict)# ANTES SE LLAMABA 'metadata'
+    payment_metadata = Column("metadata", JSONB, default=dict)
     failure_reason = Column(Text)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     completed_at = Column(DateTime(timezone=True))
